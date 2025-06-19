@@ -25486,12 +25486,15 @@ static SDValue createMinMaxReduction(SDValue Src, EVT TargetVT, SDLoc DL,
   return DAG.getExtractVectorElt(DL, TargetVT, Src, 0);
 }
 
-static SDValue LowerVECTOR_REDUCE_MINMAX(SDValue Op,
+static SDValue LowerVECTOR_REDUCE_MINMAX(SDValue Elt,
                                          const X86Subtarget &Subtarget,
                                          SelectionDAG &DAG) {
-  ISD::NodeType BinOp = ISD::getVecReduceBaseOpcode(Op.getOpcode());
-  return createMinMaxReduction(Op->getOperand(0), Op.getValueType(), SDLoc(Op),
-                               BinOp, DAG, Subtarget);
+  ISD::NodeType BinOp = ISD::getVecReduceBaseOpcode(Elt.getOpcode());
+  auto Op = createMinMaxReduction(Elt->getOperand(0), Elt.getValueType(),
+                                  SDLoc(Elt), BinOp, DAG, Subtarget);
+  assert(Op && "Failed to lower min/max reduction");
+
+  return Op;
 }
 
 static SDValue createArithReduction(SDValue V, EVT TargetVT, SDLoc DL,
@@ -25669,12 +25672,15 @@ static SDValue createArithReduction(SDValue V, EVT TargetVT, SDLoc DL,
   return DAG.getExtractVectorElt(DL, VT, V, 0);
 }
 
-static SDValue LowerVECTOR_REDUCE_ADD_FADD_MUL(SDValue V,
+static SDValue LowerVECTOR_REDUCE_ADD_FADD_MUL(SDValue Elt,
                                                const X86Subtarget &Subtarget,
                                                SelectionDAG &DAG) {
-  ISD::NodeType BinOp = ISD::getVecReduceBaseOpcode(V.getOpcode());
-  return createArithReduction(V.getOperand(0), V.getValueType(), SDValue(V),
-                              BinOp, Subtarget, DAG);
+  ISD::NodeType BinOp = ISD::getVecReduceBaseOpcode(Elt.getOpcode());
+  SDValue Op = createArithReduction(Elt.getOperand(0), Elt.getValueType(),
+                                    SDValue(Elt), BinOp, Subtarget, DAG);
+  assert(Op && "Failed to lower arithmetic reduction");
+
+  return Op;
 }
 
 static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
